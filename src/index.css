@@ -1,0 +1,79 @@
+:root {
+  --primary-color: #2563EB;
+  --secondary-color: #374151;
+  --background-color: #F5F6F8;
+  --text-color: #222222;
+  --card-radius: 8px;
+  --font-base: 14px;
+  --font-header: 18px;
+
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  font-size: var(--font-base);
+
+  color: var(--text-color);
+  background-color: var(--background-color);
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+a {
+  font-weight: 500;
+  color: var(--primary-color);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+h1 {
+  font-size: var(--font-header);
+  line-height: 1.1;
+  margin: 0 0 16px 0;
+}
+
+h2 {
+  font-size: 16px;
+  margin: 0 0 12px 0;
+}
+
+button {
+  border-radius: var(--card-radius);
+  border: none;
+  padding: 12px 24px;
+  font-size: var(--font-base);
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 44px;
+}
+
+input {
+  border-radius: var(--card-radius);
+  border: 1px solid #ddd;
+  padding: 12px;
+  font-size: var(--font-base);
+  font-family: inherit;
+  min-height: 44px;
+}
+
+input:focus {
+  outline: none;
+  border-color: var(--primary-color);
+}
