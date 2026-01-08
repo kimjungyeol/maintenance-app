@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Card from '../src/components/Card';
-import Button from '../src/components/Button';
-import { fetchCustomers } from '../src/mock/api';
-import { Customer } from '../src/types';
+import Card from '../../src/components/Card';
+import Button from '../../src/components/Button';
+import CustomerVehicleNav from '../../src/components/CustomerVehicleNav';
+import { fetchCustomers } from '../../src/mock/api';
+import { Customer } from '../../src/types';
 
 const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
@@ -122,8 +123,10 @@ const CustomersPage: React.FC = () => {
 
   return (
     <div>
+      <h1>고객 / 차량 관리</h1>
+      <CustomerVehicleNav />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1>고객 관리</h1>
+        <h2 style={{ margin: 0 }}>고객 관리</h2>
         <Button variant="secondary" onClick={handleExcelDownload}>
           엑셀 다운로드
         </Button>

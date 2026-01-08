@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import Card from '../src/components/Card';
-import Button from '../src/components/Button';
-import MonthFilter from '../src/components/MonthFilter';
-import { fetchEmployees, fetchPayrolls } from '../src/mock/api';
-import { Employee, Payroll } from '../src/types';
+import Card from '../../src/components/Card';
+import Button from '../../src/components/Button';
+import MonthFilter from '../../src/components/MonthFilter';
+import ExpensePayrollNav from '../../src/components/ExpensePayrollNav';
+import { fetchEmployees, fetchPayrolls } from '../../src/mock/api';
+import { Employee, Payroll } from '../../src/types';
 
 const PayrollPage: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
@@ -44,8 +45,10 @@ const PayrollPage: React.FC = () => {
 
   return (
     <div>
+      <h1>지출 / 급여 관리</h1>
+      <ExpensePayrollNav />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1>급여 관리</h1>
+        <h2 style={{ margin: 0 }}>급여 관리</h2>
         <Button variant="secondary" onClick={handleExcelDownload}>
           엑셀 다운로드
         </Button>

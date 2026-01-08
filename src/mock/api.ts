@@ -8,6 +8,11 @@ import {
   DashboardSummary,
   MonthlyTrends,
   Customer,
+  Vehicle,
+  Schedule,
+  MaintenanceRecord,
+  BusinessHoursConfig,
+  MaintenanceItem,
 } from '../types';
 
 const mockSales: Sale[] = [
@@ -319,6 +324,317 @@ export const fetchCustomers = async (): Promise<ApiResponse<Customer[]>> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       resolve({ success: true, data: mockCustomers });
+    }, 300);
+  });
+};
+
+const mockVehicles: Vehicle[] = [
+  {
+    vehicle_id: 1,
+    customer_id: 1,
+    customer_name: '김철수',
+    car_number: '12가3456',
+    car_model: '현대 그랜저',
+    car_year: 2022,
+    mileage: 35000,
+    vin: 'KMHXX00XXXX000001',
+    memo: '정기점검 고객',
+    created_at: '2025-01-15',
+  },
+  {
+    vehicle_id: 2,
+    customer_id: 2,
+    customer_name: '이영희',
+    car_number: '78나9012',
+    car_model: '기아 K5',
+    car_year: 2021,
+    mileage: 48000,
+    created_at: '2025-02-20',
+  },
+  {
+    vehicle_id: 3,
+    customer_id: 3,
+    customer_name: '박민수',
+    car_number: '34다5678',
+    car_model: '쌍용 티볼리',
+    car_year: 2020,
+    mileage: 62000,
+    memo: '브레이크 점검 필요',
+    created_at: '2025-03-10',
+  },
+  {
+    vehicle_id: 4,
+    customer_id: 4,
+    customer_name: '정대리',
+    car_number: '56라7890',
+    car_model: '벤츠 E-Class',
+    car_year: 2023,
+    mileage: 15000,
+    created_at: '2025-04-05',
+  },
+  {
+    vehicle_id: 5,
+    customer_id: 5,
+    customer_name: '강사장',
+    car_number: '90마1234',
+    car_model: 'BMW 5시리즈',
+    car_year: 2022,
+    mileage: 28000,
+    created_at: '2025-05-18',
+  },
+];
+
+const mockSchedules: Schedule[] = [
+  {
+    schedule_id: 1,
+    customer_id: 1,
+    customer_name: '김철수',
+    car_number: '12가3456',
+    phone: '010-1234-5678',
+    schedule_date: '2026-01-07',
+    schedule_time: '10:00',
+    service_type: '엔진오일 교체',
+    status: 'PENDING',
+    memo: '정기점검 포함',
+    created_at: '2026-01-05',
+  },
+  {
+    schedule_id: 2,
+    customer_id: 2,
+    customer_name: '이영희',
+    car_number: '78나9012',
+    phone: '010-2345-6789',
+    schedule_date: '2026-01-07',
+    schedule_time: '14:00',
+    service_type: '타이어 교체',
+    status: 'IN_PROGRESS',
+    created_at: '2026-01-06',
+  },
+  {
+    schedule_id: 3,
+    customer_id: 3,
+    customer_name: '박민수',
+    car_number: '34다5678',
+    phone: '010-3456-7890',
+    schedule_date: '2026-01-07',
+    schedule_time: '16:00',
+    service_type: '브레이크 점검',
+    status: 'PENDING',
+    memo: '브레이크 소음 발생',
+    created_at: '2026-01-07',
+  },
+  {
+    schedule_id: 4,
+    customer_name: '최고객',
+    car_number: '11바2233',
+    phone: '010-9999-8888',
+    schedule_date: '2026-01-08',
+    schedule_time: '11:00',
+    service_type: '정기점검',
+    status: 'PENDING',
+    created_at: '2026-01-06',
+  },
+  {
+    schedule_id: 5,
+    customer_id: 4,
+    customer_name: '정대리',
+    car_number: '56라7890',
+    phone: '010-4567-8901',
+    schedule_date: '2026-01-08',
+    schedule_time: '15:00',
+    service_type: '에어컨 점검',
+    status: 'PENDING',
+    created_at: '2026-01-05',
+  },
+];
+
+const mockMaintenanceRecords: MaintenanceRecord[] = [
+  {
+    maintenance_id: 1,
+    vehicle_id: 1,
+    customer_name: '김철수',
+    car_number: '12가3456',
+    service_date: '2026-01-02',
+    service_items: ['엔진오일 교체', '오일필터 교체', '에어컨 필터 교체'],
+    parts_cost: 180000,
+    labor_cost: 80000,
+    total_cost: 260000,
+    mileage: 35000,
+    technician: '홍길동',
+    memo: '정기점검 완료',
+  },
+  {
+    maintenance_id: 2,
+    vehicle_id: 2,
+    customer_name: '이영희',
+    car_number: '78나9012',
+    service_date: '2025-12-28',
+    service_items: ['타이어 교체 (4개)', '휠 밸런싱'],
+    parts_cost: 480000,
+    labor_cost: 80000,
+    total_cost: 560000,
+    mileage: 47500,
+    technician: '김정비',
+  },
+  {
+    maintenance_id: 3,
+    vehicle_id: 3,
+    customer_name: '박민수',
+    car_number: '34다5678',
+    service_date: '2025-12-20',
+    service_items: ['브레이크 패드 교체', '브레이크 오일 교체'],
+    parts_cost: 220000,
+    labor_cost: 100000,
+    total_cost: 320000,
+    mileage: 61800,
+    technician: '홍길동',
+    memo: '브레이크 소음 해결',
+  },
+  {
+    maintenance_id: 4,
+    vehicle_id: 1,
+    customer_name: '김철수',
+    car_number: '12가3456',
+    service_date: '2025-10-15',
+    service_items: ['정기점검', '엔진오일 교체'],
+    parts_cost: 120000,
+    labor_cost: 60000,
+    total_cost: 180000,
+    mileage: 32000,
+    technician: '홍길동',
+  },
+  {
+    maintenance_id: 5,
+    vehicle_id: 4,
+    customer_name: '정대리',
+    car_number: '56라7890',
+    service_date: '2025-11-10',
+    service_items: ['엔진오일 교체', '와이퍼 교체', '배터리 점검'],
+    parts_cost: 250000,
+    labor_cost: 70000,
+    total_cost: 320000,
+    mileage: 14000,
+    technician: '김정비',
+  },
+];
+
+const mockBusinessHours: BusinessHoursConfig[] = [
+  { day: 'mon', dayKo: '월요일', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { day: 'tue', dayKo: '화요일', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { day: 'wed', dayKo: '수요일', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { day: 'thu', dayKo: '목요일', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { day: 'fri', dayKo: '금요일', isOpen: true, openTime: '09:00', closeTime: '18:00' },
+  { day: 'sat', dayKo: '토요일', isOpen: true, openTime: '09:00', closeTime: '15:00' },
+  { day: 'sun', dayKo: '일요일', isOpen: false, openTime: '09:00', closeTime: '18:00' },
+];
+
+const mockMaintenanceItems: MaintenanceItem[] = [
+  {
+    item_id: 1,
+    item_name: '엔진오일 교체',
+    category: 'ENGINE',
+    default_price: 80000,
+    default_duration: 30,
+    description: '순정 엔진오일 사용',
+    is_active: true,
+  },
+  {
+    item_id: 2,
+    item_name: '오일필터 교체',
+    category: 'ENGINE',
+    default_price: 25000,
+    default_duration: 15,
+    is_active: true,
+  },
+  {
+    item_id: 3,
+    item_name: '브레이크 패드 교체',
+    category: 'BRAKE',
+    default_price: 180000,
+    default_duration: 60,
+    description: '전륜 또는 후륜 기준',
+    is_active: true,
+  },
+  {
+    item_id: 4,
+    item_name: '타이어 교체',
+    category: 'SUSPENSION',
+    default_price: 120000,
+    default_duration: 45,
+    description: '1개 기준 가격',
+    is_active: true,
+  },
+  {
+    item_id: 5,
+    item_name: '배터리 교체',
+    category: 'ELECTRICAL',
+    default_price: 150000,
+    default_duration: 20,
+    is_active: true,
+  },
+  {
+    item_id: 6,
+    item_name: '에어컨 필터 교체',
+    category: 'ETC',
+    default_price: 35000,
+    default_duration: 15,
+    is_active: true,
+  },
+  {
+    item_id: 7,
+    item_name: '와이퍼 교체',
+    category: 'ETC',
+    default_price: 20000,
+    default_duration: 10,
+    is_active: true,
+  },
+  {
+    item_id: 8,
+    item_name: '정기점검',
+    category: 'ETC',
+    default_price: 50000,
+    default_duration: 40,
+    description: '종합 점검 서비스',
+    is_active: true,
+  },
+];
+
+export const fetchVehicles = async (): Promise<ApiResponse<Vehicle[]>> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockVehicles });
+    }, 300);
+  });
+};
+
+export const fetchSchedules = async (): Promise<ApiResponse<Schedule[]>> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockSchedules });
+    }, 300);
+  });
+};
+
+export const fetchMaintenanceRecords = async (): Promise<ApiResponse<MaintenanceRecord[]>> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockMaintenanceRecords });
+    }, 300);
+  });
+};
+
+export const fetchBusinessHours = async (): Promise<ApiResponse<BusinessHoursConfig[]>> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockBusinessHours });
+    }, 300);
+  });
+};
+
+export const fetchMaintenanceItems = async (): Promise<ApiResponse<MaintenanceItem[]>> => {
+  return new Promise((resolve) => {
+    setTimeout(() => {
+      resolve({ success: true, data: mockMaintenanceItems });
     }, 300);
   });
 };

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import Card from '../src/components/Card';
-import Input from '../src/components/Input';
-import Button from '../src/components/Button';
+import Card from '../../src/components/Card';
+import Input from '../../src/components/Input';
+import Button from '../../src/components/Button';
+import SettingsNav from '../../src/components/SettingsNav';
 
 const SettingsPage: React.FC = () => {
   const [businessInfo, setBusinessInfo] = useState({
@@ -17,7 +18,8 @@ const SettingsPage: React.FC = () => {
 
   return (
     <div>
-      <h1>기초 설정</h1>
+      <h1>설정</h1>
+      <SettingsNav />
 
       <Card>
         <h2>사업장 정보</h2>

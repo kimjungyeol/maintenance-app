@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import Card from '../src/components/Card';
-import Button from '../src/components/Button';
-import LineChart from '../src/components/LineChart';
-import { fetchDashboardSummary, fetchMonthlyTrends } from '../src/mock/api';
-import { DashboardSummary, MonthlyTrends } from '../src/types';
+import Card from '../../src/components/Card';
+import Button from '../../src/components/Button';
+import LineChart from '../../src/components/LineChart';
+import { fetchDashboardSummary, fetchMonthlyTrends } from '../../src/mock/api';
+import { DashboardSummary, MonthlyTrends } from '../../src/types';
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();

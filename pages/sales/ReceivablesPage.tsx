@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import Card from '../src/components/Card';
-import Button from '../src/components/Button';
-import MonthFilter from '../src/components/MonthFilter';
-import { fetchReceivables } from '../src/mock/api';
-import { Receivable } from '../src/types';
+import Card from '../../src/components/Card';
+import Button from '../../src/components/Button';
+import MonthFilter from '../../src/components/MonthFilter';
+import SalesNav from '../../src/components/SalesNav';
+import { fetchReceivables } from '../../src/mock/api';
+import { Receivable } from '../../src/types';
 
 const ReceivablesPage: React.FC = () => {
   const [receivables, setReceivables] = useState<Receivable[]>([]);
@@ -48,8 +49,10 @@ const ReceivablesPage: React.FC = () => {
 
   return (
     <div>
+      <h1>매출 관리</h1>
+      <SalesNav />
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-        <h1>미수금 관리</h1>
+        <h2 style={{ margin: 0 }}>미수금 관리</h2>
         <Button variant="secondary" onClick={handleExcelDownload}>
           엑셀 다운로드
         </Button>

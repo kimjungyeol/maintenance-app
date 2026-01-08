@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
-import Card from '../src/components/Card';
-import Button from '../src/components/Button';
-import { fetchSales, fetchExpenses } from '../src/mock/api';
-import { Sale, Expense } from '../src/types';
+import Card from '../../src/components/Card';
+import Button from '../../src/components/Button';
+import ReportsNav from '../../src/components/ReportsNav';
+import { fetchSales, fetchExpenses } from '../../src/mock/api';
+import { Sale, Expense } from '../../src/types';
 
 const MonthlyReportPage: React.FC = () => {
   const [sales, setSales] = useState<Sale[]>([]);
@@ -43,7 +44,8 @@ const MonthlyReportPage: React.FC = () => {
 
   return (
     <div>
-      <h1>월별 정산</h1>
+      <h1>정산 / 리포트</h1>
+      <ReportsNav />
 
       <div style={{ marginBottom: '16px' }}>
         <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>

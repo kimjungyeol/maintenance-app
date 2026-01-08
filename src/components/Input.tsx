@@ -7,6 +7,7 @@ interface InputProps {
   placeholder?: string;
   label?: string;
   required?: boolean;
+  name?: string;
 }
 
 const Input: React.FC<InputProps> = ({
@@ -16,6 +17,7 @@ const Input: React.FC<InputProps> = ({
   placeholder,
   label,
   required = false,
+  name,
 }) => {
   const inputType = type === 'number' ? 'number' : type;
 
@@ -29,6 +31,7 @@ const Input: React.FC<InputProps> = ({
       )}
       <input
         type={inputType}
+        name={name}
         value={value}
         onChange={onChange}
         placeholder={placeholder}
