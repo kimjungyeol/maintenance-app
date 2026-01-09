@@ -10,6 +10,10 @@ const BusinessHours: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [bookingInterval, setBookingInterval] = useState(60); // 기본 1시간(60분)
   const [bookingCapacity, setBookingCapacity] = useState(1); // 기본 1명
+  const [showGuideButton, setShowGuideButton] = useState(() => {
+    const confirmed = localStorage.getItem('settings_business_hours_confirmed');
+    return confirmed !== 'true';
+  });
 
   useEffect(() => {
     loadBusinessHours();
@@ -89,6 +93,13 @@ const BusinessHours: React.FC = () => {
     return mins > 0 ? `${hours}시간 ${mins}분` : `${hours}시간`;
   };
 
+  const handleGuideConfirm = () => {
+    if (window.confirm('설정 방법을 확인 하셨습니까?')) {
+      localStorage.setItem('settings_business_hours_confirmed', 'true');
+      setShowGuideButton(false);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -103,6 +114,24 @@ const BusinessHours: React.FC = () => {
     <div>
       <h1>설정</h1>
       <SettingsNav />
+
+      {showGuideButton && (
+        <Card style={{ marginBottom: '16px', backgroundColor: '#fffbeb', border: '2px solid #fbbf24' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '14px', color: '#92400e', fontWeight: 500, marginBottom: '4px' }}>
+                💡 설정 페이지를 처음 사용하시나요? 사용 방법을 확인해주세요.
+              </div>
+              <div style={{ fontSize: '13px', color: '#78350f' }}>
+                요일별 영업시간, 예약을 받을 시간 단위 및 예약 시간별 동시 예약 가능 인원을 설정해 주세요.
+              </div>
+            </div>
+            <Button size="small" onClick={handleGuideConfirm}>
+              사용 확인
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <h2>요일별 영업시간 설정</h2>

@@ -80,6 +80,19 @@ const ProfitAnalysis: React.FC = () => {
 
   return (
     <div>
+      <style>{`
+        .profit-charts-grid {
+          display: grid;
+          grid-template-columns: repeat(2, 1fr);
+          gap: 16px;
+        }
+
+        @media (max-width: 768px) {
+          .profit-charts-grid {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
       <h1>정산 / 리포트</h1>
       <ReportsNav />
       <ProtectedFeature featureKey="PROFIT_ANALYSIS">
@@ -286,11 +299,7 @@ const ProfitAnalysis: React.FC = () => {
             />
           </Card>
 
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-            gap: '16px',
-          }}>
+          <div className="profit-charts-grid">
             <Card>
               <LineChart
                 data={monthlyTrends.sales}
@@ -308,6 +317,26 @@ const ProfitAnalysis: React.FC = () => {
                 year={monthlyTrends.year}
               />
             </Card>
+
+            <Card>
+              <LineChart
+                data={monthlyTrends.receivables}
+                title="미수금 관리"
+                color="#f59e0b"
+                year={monthlyTrends.year}
+              />
+            </Card>
+
+            {monthlyTrends.customers && (
+              <Card>
+                <LineChart
+                  data={monthlyTrends.customers}
+                  title="고객 증가 추이"
+                  color="#10b981"
+                  year={monthlyTrends.year}
+                />
+              </Card>
+            )}
           </div>
         </div>
       )}

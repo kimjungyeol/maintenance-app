@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import Card from '../../src/components/Card';
 import Button from '../../src/components/Button';
 import Input from '../../src/components/Input';
 import ScheduleNav from '../../src/components/ScheduleNav';
+import { fetchMaintenanceItems } from '../../src/mock/api';
+import { MaintenanceItem } from '../../src/types';
 
 const BookingCreate: React.FC = () => {
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState({
     customer_name: '',
     car_number: '',
@@ -15,8 +19,57 @@ const BookingCreate: React.FC = () => {
     memo: '',
   });
 
+  const [serviceInputMode, setServiceInputMode] = useState<'select' | 'manual'>('select');
+  const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceItem[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
+  useEffect(() => {
+    loadMaintenanceItems();
+
+    // URL 파라미터에서 날짜와 시간 읽기
+    const dateParam = searchParams.get('date');
+    const timeParam = searchParams.get('time');
+
+    if (dateParam || timeParam) {
+      setFormData(prev => ({
+        ...prev,
+        ...(dateParam && { schedule_date: dateParam }),
+        ...(timeParam && { schedule_time: timeParam }),
+      }));
+    }
+  }, [searchParams]);
+
+  const loadMaintenanceItems = async () => {
+    const response = await fetchMaintenanceItems();
+    if (response.success) {
+      // 활성화된 항목만 필터링
+      setMaintenanceItems(response.data.filter(item => item.is_active));
+    }
+  };
+
+  const handleServiceSelect = (serviceName: string) => {
+    if (serviceName && !selectedServices.includes(serviceName)) {
+      setSelectedServices(prev => [...prev, serviceName]);
+    }
+  };
+
+  const handleRemoveService = (serviceName: string) => {
+    setSelectedServices(prev => prev.filter(s => s !== serviceName));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 선택 모드일 때는 selectedServices를 사용하고, 직접 입력일 때는 formData.service_type 사용
+    const serviceType = serviceInputMode === 'select'
+      ? selectedServices.join(', ')
+      : formData.service_type;
+
+    if (!serviceType) {
+      alert('서비스를 선택하거나 입력해주세요');
+      return;
+    }
+
     alert('예약이 등록되었습니다 (Mock)');
     // 폼 초기화
     setFormData({
@@ -28,6 +81,7 @@ const BookingCreate: React.FC = () => {
       service_type: '',
       memo: '',
     });
+    setSelectedServices([]);
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -114,14 +168,169 @@ const BookingCreate: React.FC = () => {
               </select>
             </div>
 
-            <Input
-              label="서비스 종류"
-              name="service_type"
-              value={formData.service_type}
-              onChange={handleInputChange}
-              placeholder="엔진오일 교체, 정기점검 등"
-              required
-            />
+            <div style={{ marginBottom: '12px' }}>
+              <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                서비스 종류 <span style={{ color: 'red' }}>*</span>
+              </label>
+
+              {/* 입력 모드 선택 라디오 버튼 */}
+              <div style={{
+                display: 'flex',
+                gap: '16px',
+                marginBottom: '12px',
+                padding: '12px',
+                backgroundColor: '#f9fafb',
+                borderRadius: '8px',
+              }}>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}>
+                  <input
+                    type="radio"
+                    name="serviceInputMode"
+                    value="select"
+                    checked={serviceInputMode === 'select'}
+                    onChange={() => {
+                      setServiceInputMode('select');
+                      setFormData(prev => ({ ...prev, service_type: '' }));
+                      setSelectedServices([]);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span>항목 선택</span>
+                </label>
+                <label style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                }}>
+                  <input
+                    type="radio"
+                    name="serviceInputMode"
+                    value="manual"
+                    checked={serviceInputMode === 'manual'}
+                    onChange={() => {
+                      setServiceInputMode('manual');
+                      setFormData(prev => ({ ...prev, service_type: '' }));
+                      setSelectedServices([]);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  />
+                  <span>직접 입력</span>
+                </label>
+              </div>
+
+              {/* 항목 선택 모드 */}
+              {serviceInputMode === 'select' && (
+                <>
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      handleServiceSelect(e.target.value);
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '12px',
+                      borderRadius: 'var(--card-radius)',
+                      border: '1px solid #ddd',
+                      fontSize: 'var(--font-base)',
+                      minHeight: '44px',
+                      marginBottom: '12px',
+                    }}
+                  >
+                    <option value="">서비스를 선택하세요</option>
+                    {maintenanceItems.map((item) => (
+                      <option key={item.item_id} value={item.item_name}>
+                        {item.item_name} - {item.default_price.toLocaleString('ko-KR')}원 (약 {Math.floor(item.default_duration / 60)}시간)
+                      </option>
+                    ))}
+                  </select>
+
+                  {/* 선택된 서비스 배지 표시 */}
+                  {selectedServices.length > 0 && (
+                    <div style={{
+                      display: 'flex',
+                      flexWrap: 'wrap',
+                      gap: '8px',
+                      padding: '12px',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: '8px',
+                      border: '1px solid #bae6fd',
+                    }}>
+                      {selectedServices.map((service, index) => (
+                        <div
+                          key={index}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '5px',
+                            padding: '4px 10px',
+                            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                            color: '#fff',
+                            borderRadius: '16px',
+                            fontSize: '13px',
+                            fontWeight: 500,
+                            boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
+                          }}
+                        >
+                          <span>{service}</span>
+                          <button
+                            type="button"
+                            onClick={() => handleRemoveService(service)}
+                            style={{
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              width: '16px',
+                              height: '16px',
+                              minWidth: '16px',
+                              minHeight: '16px',
+                              padding: 0,
+                              border: 'none',
+                              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                              color: '#fff',
+                              borderRadius: '50%',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              lineHeight: '17px',
+                            }}
+                          >
+                            ×
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* 직접 입력 모드 */}
+              {serviceInputMode === 'manual' && (
+                <input
+                  type="text"
+                  name="service_type"
+                  value={formData.service_type}
+                  onChange={handleInputChange}
+                  placeholder="엔진오일 교체, 정기점검 등"
+                  required
+                  style={{
+                    width: '100%',
+                    padding: '12px',
+                    borderRadius: 'var(--card-radius)',
+                    border: '1px solid #ddd',
+                    fontSize: 'var(--font-base)',
+                    minHeight: '44px',
+                  }}
+                />
+              )}
+            </div>
 
             <div style={{ marginBottom: '12px' }}>
               <label style={{ display: 'block', marginBottom: '4px', fontWeight: 500 }}>
@@ -163,6 +372,7 @@ const BookingCreate: React.FC = () => {
                       service_type: '',
                       memo: '',
                     });
+                    setSelectedServices([]);
                   }
                 }}
               >
@@ -176,10 +386,8 @@ const BookingCreate: React.FC = () => {
       <Card style={{ backgroundColor: '#f9fafb', marginTop: '16px' }}>
         <h3 style={{ marginTop: 0, fontSize: '16px', fontWeight: 600 }}>예약 안내</h3>
         <div style={{ fontSize: '14px', lineHeight: '1.8', color: '#666' }}>
-          <div>• 영업시간: 월~금 09:00-18:00, 토 09:00-15:00</div>
-          <div>• 일요일은 휴무입니다</div>
-          <div>• 예약 변경은 전화로 문의해 주세요</div>
-          <div>• 예약 시간보다 10분 일찍 도착해 주시면 감사하겠습니다</div>
+          <div>• 등록 된 예약은 취소 할 수 있습니다.</div>
+          <div>• 등록 된 예약은 일정 캘린더나 오늘 일정에서 확인 할 수 있습니다.</div>
         </div>
       </Card>
     </div>

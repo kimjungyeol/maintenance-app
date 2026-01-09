@@ -29,8 +29,8 @@ const ScheduleNav: React.FC = () => {
             style={{
               padding: '8px 16px',
               borderRadius: '8px 8px 0 0',
-              backgroundColor: isActive ? 'var(--primary-color)' : 'transparent',
-              color: isActive ? '#fff' : 'var(--text-color)',
+              backgroundColor: 'transparent',
+              color: isActive ? 'var(--primary-color)' : 'var(--text-color)',
               fontWeight: isActive ? 600 : 400,
               textDecoration: 'none',
               whiteSpace: 'nowrap',

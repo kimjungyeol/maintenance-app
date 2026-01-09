@@ -31,7 +31,21 @@ import PlanBilling from '../pages/settings/PlanBilling'
 
 const NavItem: React.FC<{ to: string; children: React.ReactNode; onClick?: () => void; isMobile?: boolean }> = ({ to, children, onClick, isMobile = false }) => {
   const location = useLocation()
-  const isActive = location.pathname === to
+
+  // 경로 활성화 로직:
+  // 1. 홈("/")은 정확히 일치할 때만 활성화
+  // 2. 나머지는 섹션(첫 번째 경로 세그먼트)이 일치하면 활성화
+  const isActive = (() => {
+    if (to === '/') {
+      return location.pathname === to
+    }
+
+    // 섹션 추출 (예: "/schedule/today" -> "/schedule")
+    const toSection = '/' + to.split('/')[1]
+    const currentSection = '/' + location.pathname.split('/')[1]
+
+    return toSection === currentSection
+  })()
 
   const mobileStyle: React.CSSProperties = {
     display: 'block',

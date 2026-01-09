@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import Card from '../../src/components/Card';
+import Input from '../../src/components/Input';
 import ScheduleNav from '../../src/components/ScheduleNav';
 import { fetchSchedules } from '../../src/mock/api';
 import { Schedule } from '../../src/types';
 
 const WorkStatus: React.FC = () => {
+  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]);
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [stats, setStats] = useState({
     pending: 0,
@@ -16,21 +18,20 @@ const WorkStatus: React.FC = () => {
 
   useEffect(() => {
     loadSchedules();
-  }, []);
+  }, [selectedDate]);
 
   const loadSchedules = async () => {
     const response = await fetchSchedules();
     if (response.success) {
-      const today = new Date().toISOString().split('T')[0];
-      const todaySchedules = response.data.filter(s => s.schedule_date === today);
+      const filteredSchedules = response.data.filter(s => s.schedule_date === selectedDate);
 
-      setSchedules(todaySchedules);
+      setSchedules(filteredSchedules);
       setStats({
-        pending: todaySchedules.filter(s => s.status === 'PENDING').length,
-        inProgress: todaySchedules.filter(s => s.status === 'IN_PROGRESS').length,
-        completed: todaySchedules.filter(s => s.status === 'COMPLETED').length,
-        cancelled: todaySchedules.filter(s => s.status === 'CANCELLED').length,
-        total: todaySchedules.length,
+        pending: filteredSchedules.filter(s => s.status === 'PENDING').length,
+        inProgress: filteredSchedules.filter(s => s.status === 'IN_PROGRESS').length,
+        completed: filteredSchedules.filter(s => s.status === 'COMPLETED').length,
+        cancelled: filteredSchedules.filter(s => s.status === 'CANCELLED').length,
+        total: filteredSchedules.length,
       });
     }
   };
@@ -59,10 +60,28 @@ const WorkStatus: React.FC = () => {
     ? Math.round((stats.completed / stats.total) * 100)
     : 0;
 
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const year = date.getFullYear();
+    const month = date.getMonth() + 1;
+    const day = date.getDate();
+    return `${year}년 ${month}월 ${day}일`;
+  };
+
   return (
     <div>
       <h1>스케줄 관리</h1>
       <ScheduleNav />
+
+      <Card style={{ marginBottom: '24px' }}>
+        <h2>날짜 선택</h2>
+        <Input
+          type="date"
+          label="조회 날짜"
+          value={selectedDate}
+          onChange={(e) => setSelectedDate(e.target.value)}
+        />
+      </Card>
 
       <div style={{
         display: 'grid',
@@ -100,7 +119,7 @@ const WorkStatus: React.FC = () => {
       </div>
 
       <Card style={{ marginBottom: '24px' }}>
-        <h2>오늘의 완료율</h2>
+        <h2>{formatDate(selectedDate)} 완료율</h2>
         <div style={{ marginTop: '16px' }}>
           <div style={{
             display: 'flex',
@@ -129,10 +148,10 @@ const WorkStatus: React.FC = () => {
       </Card>
 
       <Card>
-        <h2>오늘의 일정 ({stats.total}건)</h2>
+        <h2>{formatDate(selectedDate)} 일정 ({stats.total}건)</h2>
         {schedules.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: '#999' }}>
-            오늘 예약된 일정이 없습니다.
+            {formatDate(selectedDate)} 예약된 일정이 없습니다.
           </div>
         ) : (
           <div style={{ marginTop: '16px' }}>

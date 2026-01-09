@@ -11,15 +11,44 @@ const SettingsPage: React.FC = () => {
     phone: '010-1234-5678',
     address: '경기도 평택시',
   });
+  const [showGuideButton, setShowGuideButton] = useState(() => {
+    const confirmed = localStorage.getItem('settings_basic_confirmed');
+    return confirmed !== 'true';
+  });
 
   const handleSave = () => {
     alert('설정이 저장되었습니다 (Mock)');
+  };
+
+  const handleGuideConfirm = () => {
+    if (window.confirm('설정 방법을 확인 하셨습니까?')) {
+      localStorage.setItem('settings_basic_confirmed', 'true');
+      setShowGuideButton(false);
+    }
   };
 
   return (
     <div>
       <h1>설정</h1>
       <SettingsNav />
+
+      {showGuideButton && (
+        <Card style={{ marginBottom: '16px', backgroundColor: '#fffbeb', border: '2px solid #fbbf24' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '14px', color: '#92400e', fontWeight: 500, marginBottom: '4px' }}>
+                💡 설정 페이지를 처음 사용하시나요? 사용 방법을 확인해주세요.
+              </div>
+              <div style={{ fontSize: '13px', color: '#78350f' }}>
+                사업장의 기본 정보를 입력해 주시기 바랍니다.
+              </div>
+            </div>
+            <Button size="small" onClick={handleGuideConfirm}>
+              사용 확인
+            </Button>
+          </div>
+        </Card>
+      )}
 
       <Card>
         <h2>사업장 정보</h2>

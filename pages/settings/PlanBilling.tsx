@@ -8,6 +8,10 @@ import { PlanType } from '../../src/types';
 const PlanBilling: React.FC = () => {
   const { userPlan, planInfo, changePlan } = usePlan();
   const [selectedPlan, setSelectedPlan] = useState<PlanType>(userPlan.current_plan);
+  const [showGuideButton, setShowGuideButton] = useState(() => {
+    const confirmed = localStorage.getItem('settings_plan_billing_confirmed');
+    return confirmed !== 'true';
+  });
 
   // 플랜 레벨 매핑
   const getPlanLevel = (plan: PlanType): number => {
@@ -19,6 +23,13 @@ const PlanBilling: React.FC = () => {
     if (selectedPlan !== userPlan.current_plan) {
       changePlan(selectedPlan);
       alert(`플랜이 ${PLAN_INFO[selectedPlan].name}으로 변경되었습니다.`);
+    }
+  };
+
+  const handleGuideConfirm = () => {
+    if (window.confirm('설정 방법을 확인 하셨습니까?')) {
+      localStorage.setItem('settings_plan_billing_confirmed', 'true');
+      setShowGuideButton(false);
     }
   };
 
@@ -116,6 +127,25 @@ const PlanBilling: React.FC = () => {
     <div>
       <h1>설정</h1>
       <SettingsNav />
+
+      {showGuideButton && (
+        <Card style={{ marginBottom: '16px', backgroundColor: '#fffbeb', border: '2px solid #fbbf24' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '14px', color: '#92400e', fontWeight: 500, marginBottom: '4px' }}>
+                💡 설정 페이지를 처음 사용하시나요? 사용 방법을 확인해주세요.
+              </div>
+              <div style={{ fontSize: '13px', color: '#78350f' }}>
+                플랜을 확인 하시고, 필요한 기능을 사용해 보세요.
+              </div>
+            </div>
+            <Button size="small" onClick={handleGuideConfirm}>
+              사용 확인
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <h2>플랜 / 결제 정보</h2>
 
       <div style={{

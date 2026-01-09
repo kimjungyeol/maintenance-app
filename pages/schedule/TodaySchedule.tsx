@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import Card from '../../src/components/Card';
 import Button from '../../src/components/Button';
+import Input from '../../src/components/Input';
 import ScheduleNav from '../../src/components/ScheduleNav';
-import { fetchSchedules } from '../../src/mock/api';
-import { Schedule } from '../../src/types';
+import { fetchSchedules, fetchMaintenanceItems } from '../../src/mock/api';
+import { Schedule, MaintenanceItem } from '../../src/types';
 
 const TodaySchedule: React.FC = () => {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -12,9 +13,27 @@ const TodaySchedule: React.FC = () => {
   const [bookingCapacity, setBookingCapacity] = useState(1);
   const [expandedSlots, setExpandedSlots] = useState<Set<string>>(new Set());
 
+  // 모달 관련 상태
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null);
+  const [selectedTime, setSelectedTime] = useState('');
+  const [formData, setFormData] = useState({
+    customer_name: '',
+    car_number: '',
+    phone: '',
+    schedule_date: new Date().toISOString().split('T')[0],
+    schedule_time: '10:00',
+    service_type: '',
+    memo: '',
+  });
+  const [serviceInputMode, setServiceInputMode] = useState<'select' | 'manual'>('select');
+  const [maintenanceItems, setMaintenanceItems] = useState<MaintenanceItem[]>([]);
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+
   useEffect(() => {
     loadSchedules();
     loadBookingInterval();
+    loadMaintenanceItems();
   }, []);
 
   const loadSchedules = async () => {
@@ -45,6 +64,13 @@ const TodaySchedule: React.FC = () => {
     }
   };
 
+  const loadMaintenanceItems = async () => {
+    const response = await fetchMaintenanceItems();
+    if (response.success) {
+      setMaintenanceItems(response.data.filter(item => item.is_active));
+    }
+  };
+
   const toggleSlot = (time: string) => {
     setExpandedSlots(prev => {
       const newSet = new Set(prev);
@@ -62,6 +88,116 @@ const TodaySchedule: React.FC = () => {
       prev.map(s => s.schedule_id === scheduleId ? { ...s, status: newStatus } : s)
     );
     alert(`일정 상태가 변경되었습니다 (Mock)`);
+  };
+
+  const handleBookingClick = (time: string) => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    const todayStr = `${year}-${month}-${day}`;
+
+    setSelectedTime(time);
+    setEditingSchedule(null);
+    setFormData({
+      customer_name: '',
+      car_number: '',
+      phone: '',
+      schedule_date: todayStr,
+      schedule_time: time,
+      service_type: '',
+      memo: '',
+    });
+    setSelectedServices([]);
+    setServiceInputMode('select');
+    setIsModalOpen(true);
+  };
+
+  const handleEditClick = (schedule: Schedule) => {
+    setSelectedTime(schedule.schedule_time);
+    setEditingSchedule(schedule);
+    setFormData({
+      customer_name: schedule.customer_name,
+      car_number: schedule.car_number,
+      phone: schedule.phone,
+      schedule_date: schedule.schedule_date,
+      schedule_time: schedule.schedule_time,
+      service_type: schedule.service_type,
+      memo: schedule.memo || '',
+    });
+    // 서비스 타입을 쉼표로 분리하여 선택된 서비스로 설정
+    setSelectedServices(schedule.service_type.split(',').map(s => s.trim()));
+    setServiceInputMode('select');
+    setIsModalOpen(true);
+  };
+
+  const closeModal = () => {
+    setIsModalOpen(false);
+    setEditingSchedule(null);
+    setSelectedTime('');
+  };
+
+  const handleServiceSelect = (serviceName: string) => {
+    if (serviceName && !selectedServices.includes(serviceName)) {
+      setSelectedServices(prev => [...prev, serviceName]);
+    }
+  };
+
+  const handleRemoveService = (serviceName: string) => {
+    setSelectedServices(prev => prev.filter(s => s !== serviceName));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const serviceType = serviceInputMode === 'select'
+      ? selectedServices.join(', ')
+      : formData.service_type;
+
+    if (!serviceType) {
+      alert('서비스를 선택하거나 입력해주세요');
+      return;
+    }
+
+    if (editingSchedule) {
+      // 수정
+      setSchedules(prev => prev.map(s =>
+        s.schedule_id === editingSchedule.schedule_id
+          ? {
+              ...s,
+              customer_name: formData.customer_name,
+              car_number: formData.car_number,
+              phone: formData.phone,
+              schedule_date: formData.schedule_date,
+              schedule_time: formData.schedule_time,
+              service_type: serviceType,
+              memo: formData.memo,
+            }
+          : s
+      ));
+      alert('예약이 수정되었습니다 (Mock)');
+    } else {
+      // 등록
+      const newSchedule: Schedule = {
+        schedule_id: Math.max(0, ...schedules.map(s => s.schedule_id)) + 1,
+        customer_name: formData.customer_name,
+        car_number: formData.car_number,
+        phone: formData.phone,
+        schedule_date: formData.schedule_date,
+        schedule_time: formData.schedule_time,
+        service_type: serviceType,
+        memo: formData.memo,
+        status: 'PENDING',
+      };
+      setSchedules(prev => [...prev, newSchedule]);
+      alert('예약이 등록되었습니다 (Mock)');
+    }
+    closeModal();
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   const getStatusBadge = (status: Schedule['status']) => {
@@ -310,7 +446,16 @@ const TodaySchedule: React.FC = () => {
                               )}
                             </div>
 
-                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+                            <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                              <Button
+                                onClick={(e) => {
+                                  e?.stopPropagation();
+                                  handleEditClick(teamSchedule);
+                                }}
+                                size="small"
+                              >
+                                수정
+                              </Button>
                               <Button
                                 onClick={(e) => {
                                   e?.stopPropagation();
@@ -344,12 +489,28 @@ const TodaySchedule: React.FC = () => {
                           </>
                         ) : (
                           // 예약이 없는 경우
-                          <div style={{
-                            padding: '24px',
-                            textAlign: 'center',
-                            color: '#999',
-                          }}>
-                            <div style={{ fontSize: '14px' }}>예약 가능</div>
+                          <div
+                            onClick={(e) => {
+                              e?.stopPropagation();
+                              handleBookingClick(slot.time);
+                            }}
+                            style={{
+                              padding: '24px',
+                              textAlign: 'center',
+                              color: '#999',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.backgroundColor = '#f0f9ff';
+                              e.currentTarget.style.color = 'var(--primary-color)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.backgroundColor = 'transparent';
+                              e.currentTarget.style.color = '#999';
+                            }}
+                          >
+                            <div style={{ fontSize: '14px', fontWeight: 500 }}>+ 예약 등록</div>
                           </div>
                         )}
                       </div>
@@ -430,7 +591,13 @@ const TodaySchedule: React.FC = () => {
                 )}
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+              <div style={{ display: 'flex', gap: '8px', marginTop: '12px', flexWrap: 'wrap' }}>
+                <Button
+                  onClick={() => handleEditClick(schedule)}
+                  size="small"
+                >
+                  수정
+                </Button>
                 <Button
                   onClick={() => handleStatusChange(schedule.schedule_id, 'IN_PROGRESS')}
                   size="small"
@@ -455,6 +622,328 @@ const TodaySchedule: React.FC = () => {
             </Card>
           ))}
         </>
+      )}
+
+      {/* 예약 등록/수정 모달 */}
+      {isModalOpen && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000,
+          padding: '16px',
+        }}>
+          <div style={{
+            backgroundColor: '#fff',
+            borderRadius: '12px',
+            width: '100%',
+            maxWidth: '500px',
+            maxHeight: '90vh',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+          }}>
+            {/* 헤더 - 고정 영역 */}
+            <div style={{
+              padding: '24px',
+              borderBottom: '2px solid #e5e7eb',
+              flexShrink: 0,
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+            }}>
+              <h2 style={{ margin: 0, fontSize: '20px', fontWeight: 700 }}>
+                {editingSchedule ? '예약 수정' : '예약 등록'} - {selectedTime}
+              </h2>
+              <button
+                onClick={closeModal}
+                type="button"
+                style={{
+                  width: '32px',
+                  height: '32px',
+                  borderRadius: '50%',
+                  border: 'none',
+                  backgroundColor: '#f3f4f6',
+                  color: '#666',
+                  fontSize: '20px',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                ×
+              </button>
+            </div>
+
+            {/* 폼 영역 - 스크롤 가능 */}
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', flex: 1, overflow: 'hidden' }}>
+              <div style={{
+                padding: '24px',
+                overflowY: 'auto',
+                flex: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+              }}>
+                <Input
+                  label="고객명"
+                  name="customer_name"
+                  value={formData.customer_name}
+                  onChange={handleInputChange}
+                  placeholder="홍길동"
+                  required
+                />
+
+                <Input
+                  label="차량번호"
+                  name="car_number"
+                  value={formData.car_number}
+                  onChange={handleInputChange}
+                  placeholder="12가3456"
+                  required
+                />
+
+                <Input
+                  label="연락처"
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleInputChange}
+                  placeholder="010-1234-5678"
+                  required
+                />
+
+                <Input
+                  label="예약일"
+                  type="date"
+                  name="schedule_date"
+                  value={formData.schedule_date}
+                  onChange={handleInputChange}
+                  required
+                />
+
+                <Input
+                  label="예약시간"
+                  type="time"
+                  name="schedule_time"
+                  value={formData.schedule_time}
+                  onChange={handleInputChange}
+                  required
+                />
+
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '8px', fontWeight: 500 }}>
+                    서비스 종류 <span style={{ color: 'red' }}>*</span>
+                  </label>
+
+                  {/* 입력 모드 선택 */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '16px',
+                    marginBottom: '12px',
+                    padding: '12px',
+                    backgroundColor: '#f9fafb',
+                    borderRadius: '8px',
+                  }}>
+                    <label style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    }}>
+                      <input
+                        type="radio"
+                        name="serviceInputMode"
+                        value="select"
+                        checked={serviceInputMode === 'select'}
+                        onChange={() => {
+                          setServiceInputMode('select');
+                          setFormData(prev => ({ ...prev, service_type: '' }));
+                          setSelectedServices([]);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>항목 선택</span>
+                    </label>
+                    <label style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      fontSize: '14px',
+                    }}>
+                      <input
+                        type="radio"
+                        name="serviceInputMode"
+                        value="manual"
+                        checked={serviceInputMode === 'manual'}
+                        onChange={() => {
+                          setServiceInputMode('manual');
+                          setFormData(prev => ({ ...prev, service_type: '' }));
+                          setSelectedServices([]);
+                        }}
+                        style={{ cursor: 'pointer' }}
+                      />
+                      <span>직접 입력</span>
+                    </label>
+                  </div>
+
+                  {/* 항목 선택 모드 */}
+                  {serviceInputMode === 'select' && (
+                    <>
+                      <select
+                        value=""
+                        onChange={(e) => handleServiceSelect(e.target.value)}
+                        style={{
+                          width: '100%',
+                          padding: '12px',
+                          borderRadius: 'var(--card-radius)',
+                          border: '1px solid #ddd',
+                          fontSize: 'var(--font-base)',
+                          minHeight: '44px',
+                          marginBottom: '12px',
+                        }}
+                      >
+                        <option value="">서비스를 선택하세요</option>
+                        {maintenanceItems.map((item) => (
+                          <option key={item.item_id} value={item.item_name}>
+                            {item.item_name} - {item.default_price.toLocaleString('ko-KR')}원 (약 {Math.floor(item.default_duration / 60)}시간)
+                          </option>
+                        ))}
+                      </select>
+
+                      {/* 선택된 서비스 배지 */}
+                      {selectedServices.length > 0 && (
+                        <div style={{
+                          display: 'flex',
+                          flexWrap: 'wrap',
+                          gap: '8px',
+                          padding: '12px',
+                          backgroundColor: '#f0f9ff',
+                          borderRadius: '8px',
+                          border: '1px solid #bae6fd',
+                        }}>
+                          {selectedServices.map((service, index) => (
+                            <div
+                              key={index}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '5px',
+                                padding: '4px 10px',
+                                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                                color: '#fff',
+                                borderRadius: '16px',
+                                fontSize: '13px',
+                                fontWeight: 500,
+                                boxShadow: '0 2px 4px rgba(102, 126, 234, 0.3)',
+                              }}
+                            >
+                              <span>{service}</span>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveService(service)}
+                                style={{
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  width: '16px',
+                                  height: '16px',
+                                  minWidth: '16px',
+                                  minHeight: '16px',
+                                  padding: 0,
+                                  border: 'none',
+                                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                  color: '#fff',
+                                  borderRadius: '50%',
+                                  fontSize: '12px',
+                                  fontWeight: 700,
+                                  cursor: 'pointer',
+                                  lineHeight: '17px',
+                                }}
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </>
+                  )}
+
+                  {/* 직접 입력 모드 */}
+                  {serviceInputMode === 'manual' && (
+                    <input
+                      type="text"
+                      name="service_type"
+                      value={formData.service_type}
+                      onChange={handleInputChange}
+                      placeholder="엔진오일 교체, 정기점검 등"
+                      required
+                      style={{
+                        width: '100%',
+                        padding: '12px',
+                        borderRadius: 'var(--card-radius)',
+                        border: '1px solid #ddd',
+                        fontSize: 'var(--font-base)',
+                        minHeight: '44px',
+                      }}
+                    />
+                  )}
+                </div>
+
+                <div style={{ marginBottom: '12px' }}>
+                  <label style={{ display: 'block', marginBottom: '4px', fontWeight: 500 }}>
+                    메모
+                  </label>
+                  <textarea
+                    name="memo"
+                    value={formData.memo}
+                    onChange={handleInputChange}
+                    placeholder="특이사항이나 요청사항을 입력하세요"
+                    style={{
+                      width: '100%',
+                      minHeight: '80px',
+                      padding: '12px',
+                      borderRadius: 'var(--card-radius)',
+                      border: '1px solid #ddd',
+                      fontSize: 'var(--font-base)',
+                      fontFamily: 'inherit',
+                      resize: 'vertical',
+                    }}
+                  />
+                </div>
+              </div>
+
+              {/* 버튼 영역 - 고정 */}
+              <div style={{
+                padding: '24px',
+                borderTop: '2px solid #e5e7eb',
+                flexShrink: 0,
+                backgroundColor: '#fff',
+              }}>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <Button type="submit" fullWidth>
+                    {editingSchedule ? '수정' : '등록'}
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={closeModal}>
+                    취소
+                  </Button>
+                </div>
+              </div>
+            </form>
+          </div>
+        </div>
       )}
     </div>
   );

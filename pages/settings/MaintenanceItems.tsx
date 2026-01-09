@@ -10,6 +10,10 @@ const MaintenanceItems: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [editingItem, setEditingItem] = useState<MaintenanceItem | null>(null);
   const [formData, setFormData] = useState<Partial<MaintenanceItem>>({});
+  const [showGuideButton, setShowGuideButton] = useState(() => {
+    const confirmed = localStorage.getItem('settings_maintenance_items_confirmed');
+    return confirmed !== 'true';
+  });
 
   useEffect(() => {
     loadItems();
@@ -99,6 +103,13 @@ const MaintenanceItems: React.FC = () => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
+  const handleGuideConfirm = () => {
+    if (window.confirm('설정 방법을 확인 하셨습니까?')) {
+      localStorage.setItem('settings_maintenance_items_confirmed', 'true');
+      setShowGuideButton(false);
+    }
+  };
+
   if (loading) {
     return (
       <div>
@@ -122,6 +133,25 @@ const MaintenanceItems: React.FC = () => {
     <div>
       <h1>설정</h1>
       <SettingsNav />
+
+      {showGuideButton && (
+        <Card style={{ marginBottom: '16px', backgroundColor: '#fffbeb', border: '2px solid #fbbf24' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <div style={{ fontSize: '14px', color: '#92400e', fontWeight: 500, marginBottom: '4px' }}>
+                💡 설정 페이지를 처음 사용하시나요? 사용 방법을 확인해주세요.
+              </div>
+              <div style={{ fontSize: '13px', color: '#78350f' }}>
+                정비 항목 정보를 추가 및 수정 or 비활성화 할 수 있습니다. 예약 등록시 사용 됩니다.
+              </div>
+            </div>
+            <Button size="small" onClick={handleGuideConfirm}>
+              사용 확인
+            </Button>
+          </div>
+        </Card>
+      )}
+
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <h2 style={{ margin: 0 }}>정비 항목 관리</h2>
         <Button onClick={() => alert('항목 추가 기능 (Mock)')}>
